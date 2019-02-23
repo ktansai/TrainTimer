@@ -3,11 +3,30 @@
 #include <M5Stack.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include "time.h"
+
 #include "WiFiConfig.h"
 
+const char* ntpServer =  "ntp.jst.mfeed.ad.jp"; //日本のNTPサーバー選択
+const long  gmtOffset_sec = 9 * 3600;           //9時間の時差を入れる
+const int   daylightOffset_sec = 0;             //夏時間はないのでゼロ
 
-// const char* url = "http://s3-ap-northeast-1.amazonaws.com/ktansai/TrainDia/Tsurumiono_weekday.csv";
 const char* url = "https://f568o9ukoc.execute-api.us-east-1.amazonaws.com/default/trainDiaLambda";
+
+void printLocalTime()
+{
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to obtain time");
+    return;
+  }
+  Serial.println(&timeinfo, "%Y %m %d %a %H:%M:%S");    //日本人にわかりやすい表記へ変更
+}
+
+
+
+
+
 
 void setup()
 {
@@ -33,6 +52,9 @@ void setup()
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
+
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
 }
 
 int value = 0;
@@ -65,4 +87,5 @@ void loop()
         renderRemainingTime(time1);
     }
     delay(5000);
+    printLocalTime();
 }
