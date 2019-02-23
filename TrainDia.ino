@@ -21,6 +21,7 @@ void setup()
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
+    M5.begin();
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
@@ -35,6 +36,14 @@ void setup()
 }
 
 int value = 0;
+
+void renderRemainingTime(const char* text){
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextColor(WHITE);
+    M5.Lcd.setTextSize(5);
+    M5.Lcd.drawCentreString(text, M5.Lcd.width()/2, M5.Lcd.height()/2 - 5*5, 1);
+    // M5.Lcd.printf(text);
+}
 
 void loop()
 {
@@ -53,6 +62,7 @@ void loop()
         JsonObject& root = jsonBuffer.parseObject(body);
         const char* time1 = root["train"][0];
         Serial.println(time1);
+        renderRemainingTime(time1);
     }
     delay(5000);
 }
