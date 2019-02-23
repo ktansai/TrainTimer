@@ -7,6 +7,10 @@
 
 #include "WiFiConfig.h"
 
+#define MODE_DEBUG 1
+
+int mode = 0;
+
 const char* ntpServer =  "ntp.jst.mfeed.ad.jp"; //日本のNTPサーバー選択
 const long  gmtOffset_sec = 9 * 3600;           //9時間の時差を入れる
 const int   daylightOffset_sec = 0;             //夏時間はないのでゼロ
@@ -67,25 +71,62 @@ void renderRemainingTime(const char* text){
     // M5.Lcd.printf(text);
 }
 
+void renderDebugConsole(char* text){
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) {
+        M5.Lcd.println("Failed to obtain time");
+        return;
+    }
+    M5.Lcd.fillScreen(BLACK);
+    M5.Lcd.setTextColor(WHITE);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.setCursor(0 ,0);
+
+    M5.Lcd.println("Date: ");
+    M5.Lcd.println(&timeinfo, "%Y %m %d %a %H:%M:%S");
+
+    M5.Lcd.println("Response: ");
+    M5.Lcd.println(text);
+}
+
 void loop()
 {
+    M5.update();
+
     HTTPClient http;
     http.begin(url);
     int httpCode = http.GET();
+    char httpResponceBuff[64];
 
     Serial.printf("Response: %d", httpCode);
     Serial.println();
     if (httpCode == HTTP_CODE_OK) {
         String body = http.getString();
+        body.toCharArray(httpResponceBuff,64);
+
         Serial.print("Response Body: ");
         Serial.println(body);
-        
+
         StaticJsonBuffer<200> jsonBuffer;
         JsonObject& root = jsonBuffer.parseObject(body);
         const char* time1 = root["train"][0];
         Serial.println(time1);
         renderRemainingTime(time1);
     }
+
+    if(M5.BtnC.wasPressed()){
+        mode++;
+        mode %= 2;
+    }
+
+    if(mode == MODE_DEBUG){
+        renderDebugConsole(httpResponceBuff);
+    }
+
+
+
+    Serial.print("mode :");
+    Serial.println(mode);
     delay(5000);
     printLocalTime();
 }
