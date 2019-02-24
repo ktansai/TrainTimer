@@ -17,6 +17,79 @@ const int   daylightOffset_sec = 0;             //夏時間はないのでゼロ
 
 const char* url = "https://f568o9ukoc.execute-api.us-east-1.amazonaws.com/default/trainDiaLambda";
 
+const int trainCount = 3;
+
+class TrainDia{
+    public: 
+        struct tm timeinfo[trainCount];
+        
+        TrainDia(){
+            timeinfo[0].tm_sec = 99;
+            getNewDia();
+        };
+
+        void getNewDia(){
+            HTTPClient http;
+            http.begin(url);
+            int httpCode = http.GET();
+            if (httpCode == HTTP_CODE_OK) {
+                String body = http.getString();
+                // body.toCharArray(httpResponceBuff,64);
+                Serial.print("Response Body: ");
+                Serial.println(body);
+                
+                StaticJsonBuffer<200> jsonBuffer;
+                JsonObject& root = jsonBuffer.parseObject(body);
+
+                for(int i = 0; i<trainCount; i++){
+                    const char* time1 = root["train"][i];
+                    int hours, minutes ;
+                    sscanf(time1, "%2d:%2d", &hours, &minutes);
+                    timeinfo[i].tm_hour = hours;
+                    timeinfo[i].tm_min  = minutes;
+                    timeinfo[i].tm_sec  = 0;
+                }
+            }
+            return;
+        };
+
+        //不正かどうか確認
+        bool shouldFetch(){
+            if (timeinfo[0].tm_sec == 99){
+                return true;
+            }
+            if (isPast()) {
+                return true;
+            }
+            return false;
+
+        };
+
+        // 過ぎてるか判定
+        bool isPast(){
+            struct tm time_now;
+            if (!getLocalTime(&time_now)) {
+                Serial.println("Failed to obtain time");
+                return false;
+            }
+
+            if (time_now.tm_hour * 60 + time_now.tm_min > timeinfo[0].tm_hour * 60 + timeinfo[0].tm_min) {
+                Serial.println("past");
+                return true;
+            }
+            else{
+                return false;
+            }
+        };
+    
+    private:
+};
+
+
+
+TrainDia trainDia = TrainDia();
+
+
 void printLocalTime()
 {
   struct tm timeinfo;
@@ -58,17 +131,50 @@ void setup()
     Serial.println(WiFi.localIP());
 
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-
 }
 
 int value = 0;
 
-void renderRemainingTime(const char* text){
+void renderRemainingTime(){
+    struct tm time_now;
+    struct tm time_remaining;
+
+    if (!getLocalTime(&time_now)) {
+        M5.Lcd.println("Failed to obtain time");
+        return;
+    }
+
+    int remain_seconds = 0;
+    // remain_seconds += (trainDia.timeinfo[0].tm_hour - time_now.tm_hour) * (60 * 60) ; 
+    // remain_seconds += (trainDia.timeinfo[0].tm_min  - time_now.tm_min)  * (60) ;
+    // remain_seconds += (trainDia.timeinfo[0].tm_sec  - time_now.tm_sec);
+
+    time_remaining = diffTime(trainDia.timeinfo[0], time_now);
+
+    char str[20];
+    sprintf(str,"%2d:%2d.%2d", time_remaining.tm_hour, time_remaining.tm_min, time_remaining.tm_sec);
+
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setTextColor(WHITE);
-    M5.Lcd.setTextSize(5);
-    M5.Lcd.drawCentreString(text, M5.Lcd.width()/2, M5.Lcd.height()/2 - 5*5, 1);
+    M5.Lcd.setTextSize(2);
+    M5.Lcd.drawCentreString(str, M5.Lcd.width()/2, M5.Lcd.height()/2 - 5*5, 4);
     // M5.Lcd.printf(text);
+}
+
+struct tm diffTime(struct tm time1 ,struct tm time2){
+    struct tm result;
+    int remain_seconds = 0;
+    remain_seconds += (time1.tm_hour - time2.tm_hour) * (60*60);
+    remain_seconds += (time1.tm_min - time2.tm_min)   * (60)   ;
+    remain_seconds += (time1.tm_sec - time2.tm_sec)            ;
+
+    result.tm_hour =  remain_seconds / (60 * 60); 
+    remain_seconds -= result.tm_hour * (60 * 60);
+    result.tm_min  =  remain_seconds / (60); 
+    remain_seconds -= result.tm_min  * (60);
+    result.tm_sec  = remain_seconds;
+
+    return result;
 }
 
 void renderDebugConsole(char* text){
@@ -93,26 +199,11 @@ void loop()
 {
     M5.update();
 
-    HTTPClient http;
-    http.begin(url);
-    int httpCode = http.GET();
-    char httpResponceBuff[64];
-
-    Serial.printf("Response: %d", httpCode);
-    Serial.println();
-    if (httpCode == HTTP_CODE_OK) {
-        String body = http.getString();
-        body.toCharArray(httpResponceBuff,64);
-
-        Serial.print("Response Body: ");
-        Serial.println(body);
-
-        StaticJsonBuffer<200> jsonBuffer;
-        JsonObject& root = jsonBuffer.parseObject(body);
-        const char* time1 = root["train"][0];
-        Serial.println(time1);
-        renderRemainingTime(time1);
+    if(trainDia.shouldFetch()){
+        trainDia.getNewDia();
     }
+
+    renderRemainingTime();
 
     if(M5.BtnC.wasPressed()){
         mode++;
@@ -120,13 +211,13 @@ void loop()
     }
 
     if(mode == MODE_DEBUG){
-        renderDebugConsole(httpResponceBuff);
+        // renderDebugConsole(httpResponceBuff);
     }
 
 
 
     Serial.print("mode :");
     Serial.println(mode);
-    delay(5000);
+    delay(1000);
     printLocalTime();
 }
