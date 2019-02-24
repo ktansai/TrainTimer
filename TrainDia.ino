@@ -11,6 +11,8 @@
 
 int mode = 0;
 
+char httpResponceBuff[64];
+
 const char* ntpServer =  "ntp.jst.mfeed.ad.jp"; //日本のNTPサーバー選択
 const long  gmtOffset_sec = 9 * 3600;           //9時間の時差を入れる
 const int   daylightOffset_sec = 0;             //夏時間はないのでゼロ
@@ -34,7 +36,7 @@ class TrainDia{
             int httpCode = http.GET();
             if (httpCode == HTTP_CODE_OK) {
                 String body = http.getString();
-                // body.toCharArray(httpResponceBuff,64);
+                body.toCharArray(httpResponceBuff,64);
                 Serial.print("Response Body: ");
                 Serial.println(body);
                 
@@ -203,15 +205,16 @@ void loop()
         trainDia.getNewDia();
     }
 
-    renderRemainingTime();
-
-    if(M5.BtnC.wasPressed()){
+    if(M5.BtnC.isPressed()){
         mode++;
         mode %= 2;
     }
 
     if(mode == MODE_DEBUG){
-        // renderDebugConsole(httpResponceBuff);
+        renderDebugConsole(httpResponceBuff);
+    }
+    else{
+        renderRemainingTime();
     }
 
 
