@@ -121,6 +121,7 @@ void setup()
 
     M5.begin();
     WiFi.begin(ssid, password);
+    M5.Lcd.drawJpgFile(SD, "/image_initializing.jpg");
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -154,12 +155,22 @@ void renderRemainingTime(){
     time_remaining = diffTime(trainDia.timeinfo[0], time_now);
 
     char str[20];
-    sprintf(str,"%2d:%2d.%2d", time_remaining.tm_hour, time_remaining.tm_min, time_remaining.tm_sec);
+    M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
+    M5.Lcd.setTextColor(BLACK);
+    
+    M5.Lcd.setTextSize(4);
+    M5.Lcd.setCursor(115,67);
+    sprintf(str,"%02d", time_remaining.tm_min);
+    M5.Lcd.print(str);
+    
+    M5.Lcd.setCursor(204,67);
+    sprintf(str,"%02d", time_remaining.tm_sec);
+    M5.Lcd.print(str);
 
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setTextColor(WHITE);
-    M5.Lcd.setTextSize(2);
-    M5.Lcd.drawCentreString(str, M5.Lcd.width()/2, M5.Lcd.height()/2 - 5*5, 4);
+    M5.Lcd.setCursor(140,188);
+    sprintf(str,"%02d:%02d", trainDia.timeinfo[0].tm_hour, trainDia.timeinfo[0].tm_min);
+    M5.Lcd.print(str);
+    // M5.Lcd.drawCentreString(str, M5.Lcd.width()/2, M5.Lcd.height()/2 - 5*5, 4);
     // M5.Lcd.printf(text);
 }
 
