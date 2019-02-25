@@ -260,9 +260,8 @@ void loop()
 
     if(mode == MODE_DEBUG){
         renderDebugConsole(httpResponceBuff);
-    }
-    
-    if(trainDia.isLast()){
+    }    
+    else if(trainDia.isLast()){
         // renderLastTrain();
         renderRemainingTime();
     }
