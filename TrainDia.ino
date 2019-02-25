@@ -21,12 +21,15 @@ const char* url = "https://f568o9ukoc.execute-api.us-east-1.amazonaws.com/defaul
 
 const int trainCount = 3;
 
+struct tm g_time_remaining;
+
 class TrainDia{
     public: 
         struct tm timeinfo[trainCount];
         
         TrainDia(){
             timeinfo[0].tm_sec = 99;
+            size_of_train_info = 0;
             getNewDia();
         };
 
@@ -43,7 +46,9 @@ class TrainDia{
                 StaticJsonBuffer<200> jsonBuffer;
                 JsonObject& root = jsonBuffer.parseObject(body);
 
-                for(int i = 0; i<trainCount; i++){
+                size_of_train_info = root["train"].size();
+
+                for(int i = 0; i < root["train"].size(); i++){
                     const char* time1 = root["train"][i];
                     int hours, minutes ;
                     sscanf(time1, "%2d:%2d", &hours, &minutes);
@@ -83,8 +88,31 @@ class TrainDia{
                 return false;
             }
         };
-    
+
+        bool isLast(){
+            if(size_of_train_info == 1){
+                return true;
+            }
+            else{
+                return false;
+            }   
+        };
+
+        bool wasLast(){
+            if(size_of_train_info == 0){
+                return true;
+            }
+            if(g_time_remaining.tm_hour > 0){
+                return true;
+            }
+
+            else{
+                return false;
+            }
+        }
+
     private:
+        int size_of_train_info;
 };
 
 
@@ -138,6 +166,14 @@ void setup()
 
 int value = 0;
 
+void renderLastTrain(){
+    M5.Lcd.drawJpgFile(SD, "/image_last_train.jpg");
+}
+
+void renderAfterLastTrain(){
+    M5.Lcd.drawJpgFile(SD, "/image_after_last.jpg");
+}
+
 void renderRemainingTime(){
     struct tm time_now;
     struct tm time_remaining;
@@ -153,6 +189,7 @@ void renderRemainingTime(){
     // remain_seconds += (trainDia.timeinfo[0].tm_sec  - time_now.tm_sec);
 
     time_remaining = diffTime(trainDia.timeinfo[0], time_now);
+    g_time_remaining = time_remaining;
 
     char str[20];
     M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
@@ -224,7 +261,14 @@ void loop()
     if(mode == MODE_DEBUG){
         renderDebugConsole(httpResponceBuff);
     }
-    else{
+    
+    if(trainDia.isLast()){
+        // renderLastTrain();
+        renderRemainingTime();
+    }
+    else if(trainDia.wasLast()){
+        renderAfterLastTrain();
+    }else{
         renderRemainingTime();
     }
 
