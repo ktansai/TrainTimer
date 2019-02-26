@@ -80,7 +80,7 @@ class TrainDia{
                 return false;
             }
 
-            if (time_now.tm_hour * 60 + time_now.tm_min > timeinfo[0].tm_hour * 60 + timeinfo[0].tm_min) {
+            if (time_now.tm_hour * 60 + time_now.tm_min >= timeinfo[0].tm_hour * 60 + timeinfo[0].tm_min) {
                 Serial.println("past");
                 return true;
             }
