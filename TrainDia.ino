@@ -243,9 +243,15 @@ void renderDebugConsole(){
 
     M5.Lcd.println("Date: ");
     M5.Lcd.println(&timeinfo, "%Y %m %d %a %H:%M:%S");
+    M5.Lcd.println("\n");
 
     M5.Lcd.println("Response: ");
     M5.Lcd.println(httpResponceBuff);
+    M5.Lcd.println("\n");
+
+    M5.Lcd.println("localIP: ");
+    M5.Lcd.println(WiFi.localIP());
+    M5.Lcd.println("\n");
 }
 
 void loop()
