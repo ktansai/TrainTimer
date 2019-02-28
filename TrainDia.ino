@@ -227,7 +227,7 @@ struct tm diffTime(struct tm time1 ,struct tm time2){
     return result;
 }
 
-void renderDebugConsole(char* text){
+void renderDebugConsole(){
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo)) {
         M5.Lcd.println("Failed to obtain time");
@@ -242,7 +242,7 @@ void renderDebugConsole(char* text){
     M5.Lcd.println(&timeinfo, "%Y %m %d %a %H:%M:%S");
 
     M5.Lcd.println("Response: ");
-    M5.Lcd.println(text);
+    M5.Lcd.println(httpResponceBuff);
 }
 
 void loop()
@@ -259,7 +259,7 @@ void loop()
     }
 
     if(mode == MODE_DEBUG){
-        renderDebugConsole(httpResponceBuff);
+        renderDebugConsole();
     }    
     else if(trainDia.isLast()){
         // renderLastTrain();
