@@ -152,6 +152,9 @@ void setup()
     M5.Lcd.drawJpgFile(SD, "/image_initializing.jpg");
 
     while (WiFi.status() != WL_CONNECTED) {
+        if(millis() > 30 * 1000){
+            ESP.restart();
+        }
         delay(500);
         Serial.print(".");
     }
@@ -248,6 +251,10 @@ void renderDebugConsole(){
 void loop()
 {
     M5.update();
+
+    if (WiFi.status() != WL_CONNECTED) {
+        ESP.restart();
+    }
 
     if(trainDia.shouldFetch()){
         trainDia.getNewDia();
