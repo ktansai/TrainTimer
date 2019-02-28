@@ -115,6 +115,35 @@ class TrainDia{
         int size_of_train_info;
 };
 
+class NotificationBar {
+    public:
+        void update(){
+            if((millis() - start_time_ms) > display_time_ms){
+                return;
+            }
+            else{
+                render();
+            }
+        };
+        void push(char *_messege, uint32_t _bg_color){
+            message  = _messege;
+            bg_color = _bg_color;
+        };
+
+    private:
+        unsigned long start_time_ms;
+        unsigned long display_time_ms = 3 * 1000;
+        char *message;
+        uint32_t bg_color;
+        void render(){
+            M5.Lcd.drawRect(0, 0, 240, 10, bg_color);
+            M5.Lcd.setTextSize(1);
+            M5.Lcd.setTextColor(BLACK);
+            M5.Lcd.setCursor(0,0);
+            M5.Lcd.print(message);
+        }
+};
+NotificationBar notification;
 
 
 TrainDia trainDia = TrainDia();
