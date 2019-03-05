@@ -23,11 +23,11 @@ const int trainCount = 3;
 
 struct tm g_time_remaining;
 
-class TrainDia{
+class TrainTimer{
     public: 
         struct tm timeinfo[trainCount];
         
-        TrainDia(){
+        TrainTimer(){
             timeinfo[0].tm_sec = 99;
             size_of_train_info = 0;
             getNewDia();
@@ -117,7 +117,7 @@ class TrainDia{
 
 
 
-TrainDia trainDia = TrainDia();
+TrainTimer trainTimer = TrainTimer();
 
 
 void printLocalTime()
@@ -187,11 +187,8 @@ void renderRemainingTime(){
     }
 
     int remain_seconds = 0;
-    // remain_seconds += (trainDia.timeinfo[0].tm_hour - time_now.tm_hour) * (60 * 60) ; 
-    // remain_seconds += (trainDia.timeinfo[0].tm_min  - time_now.tm_min)  * (60) ;
-    // remain_seconds += (trainDia.timeinfo[0].tm_sec  - time_now.tm_sec);
 
-    time_remaining = diffTime(trainDia.timeinfo[0], time_now);
+    time_remaining = diffTime(trainTimer.timeinfo[0], time_now);
     g_time_remaining = time_remaining;
 
     char str[20];
@@ -208,7 +205,7 @@ void renderRemainingTime(){
     M5.Lcd.print(str);
 
     M5.Lcd.setCursor(140,188);
-    sprintf(str,"%02d:%02d", trainDia.timeinfo[0].tm_hour, trainDia.timeinfo[0].tm_min);
+    sprintf(str,"%02d:%02d", trainTimer.timeinfo[0].tm_hour, trainTimer.timeinfo[0].tm_min);
     M5.Lcd.print(str);
     // M5.Lcd.drawCentreString(str, M5.Lcd.width()/2, M5.Lcd.height()/2 - 5*5, 4);
     // M5.Lcd.printf(text);
@@ -262,8 +259,8 @@ void loop()
         ESP.restart();
     }
 
-    if(trainDia.shouldFetch()){
-        trainDia.getNewDia();
+    if(trainTimer.shouldFetch()){
+        trainTimer.getNewDia();
     }
 
     if(M5.BtnC.isPressed()){
@@ -274,11 +271,11 @@ void loop()
     if(mode == MODE_DEBUG){
         renderDebugConsole();
     }    
-    else if(trainDia.isLast()){
+    else if(trainTimer.isLast()){
         // renderLastTrain();
         renderRemainingTime();
     }
-    else if(trainDia.wasLast()){
+    else if(trainTimer.wasLast()){
         renderAfterLastTrain();
     }else{
         renderRemainingTime();
