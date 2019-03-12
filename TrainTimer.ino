@@ -7,6 +7,8 @@
 
 #include "WiFiConfig.h"
 
+struct tm diffTime(struct tm time1 ,struct tm time2);
+
 #define MODE_DEBUG 1
 
 int mode = 0;
@@ -56,6 +58,10 @@ class TrainTimer{
                     timeinfo[i].tm_min  = minutes;
                     timeinfo[i].tm_sec  = 0;
                 }
+
+                struct tm time_now;
+                getLocalTime(&time_now);
+                g_time_remaining = diffTime(timeinfo[0], time_now);
             }
             return;
         };
@@ -167,8 +173,6 @@ void setup()
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
-int value = 0;
-
 void renderLastTrain(){
     M5.Lcd.drawJpgFile(SD, "/image_last_train.jpg");
 }
@@ -188,8 +192,6 @@ void renderRemainingTime(){
 
     int remain_seconds = 0;
 
-    time_remaining = diffTime(trainTimer.timeinfo[0], time_now);
-    g_time_remaining = time_remaining;
 
     char str[20];
     M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
@@ -197,11 +199,11 @@ void renderRemainingTime(){
     
     M5.Lcd.setTextSize(4);
     M5.Lcd.setCursor(115,67);
-    sprintf(str,"%02d", time_remaining.tm_min);
+    sprintf(str,"%02d", g_time_remaining.tm_min);
     M5.Lcd.print(str);
     
     M5.Lcd.setCursor(204,67);
-    sprintf(str,"%02d", time_remaining.tm_sec);
+    sprintf(str,"%02d", g_time_remaining.tm_sec);
     M5.Lcd.print(str);
 
     M5.Lcd.setCursor(140,188);
