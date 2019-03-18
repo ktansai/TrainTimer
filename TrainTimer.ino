@@ -189,6 +189,7 @@ void renderRemainingTime(){
         M5.Lcd.println("Failed to obtain time");
         return;
     }
+    g_time_remaining = diffTime(timeinfo[0], time_now);
 
     int remain_seconds = 0;
 
