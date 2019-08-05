@@ -8,6 +8,9 @@
 #include "WiFiConfig.h"
 
 #define MODE_DEBUG 1
+#define MODE_BUSSINES_CARD 2
+#define MODE_FB 3
+#define MODE_TWITTER 4
 
 int mode = 0;
 
@@ -177,6 +180,18 @@ void renderAfterLastTrain(){
     M5.Lcd.drawJpgFile(SD, "/image_after_last.jpg");
 }
 
+void renderBUSSINESSCARD(){
+    M5.Lcd.drawJpgFile(SD, "/image3.jpg");
+}
+
+void renderTwitter(){
+    M5.Lcd.drawJpgFile(SD, "/image2.jpg");
+}
+
+void renderFacebook(){
+    M5.Lcd.drawJpgFile(SD, "/image4.jpg");
+}
+
 void renderRemainingTime(){
     struct tm time_now;
     struct tm time_remaining;
@@ -265,10 +280,19 @@ void loop()
 
     if(M5.BtnC.isPressed()){
         mode++;
-        mode %= 2;
+            
     }
 
-    if(mode == MODE_DEBUG){
+    if(mode == MODE_BUSSINES_CARD ){
+        renderBUSSINESSCARD();
+    }
+    else if(mode == MODE_FB){
+        renderFacebook();
+    }
+    else if(mode == MODE_TWITTER){
+        renderTwitter();
+    }
+    else if(mode == MODE_DEBUG){
         renderDebugConsole();
     }    
     else if(trainTimer.isLast()){
@@ -285,6 +309,6 @@ void loop()
 
     Serial.print("mode :");
     Serial.println(mode);
-    delay(1000);
+    delay(500);
     printLocalTime();
 }
