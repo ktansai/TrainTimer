@@ -45,14 +45,13 @@ class TrainTimer{
                 Serial.print("Response Body: ");
                 Serial.println(body);
                 
-                StaticJsonDocument<64> jsonObj;
-                // JsonObject& root = jsonBuffer.parseObject(body);
-                deserializeJson(jsonObj,body);
+                StaticJsonBuffer<200> jsonBuffer;
+                JsonObject& root = jsonBuffer.parseObject(body);
 
-                size_of_train_info = jsonObj["train"].size();
+                size_of_train_info = root["train"].size();
 
-                for(int i = 0; i < jsonObj["train"].size(); i++){
-                    const char* time1 = jsonObj["train"][i];
+                for(int i = 0; i < root["train"].size(); i++){
+                    const char* time1 = root["train"][i];
                     int hours, minutes ;
                     sscanf(time1, "%2d:%2d", &hours, &minutes);
                     timeinfo[i].tm_hour = hours;
