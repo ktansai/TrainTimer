@@ -174,7 +174,7 @@ void setup()
 }
 
 void renderLastTrain(){
-    M5.Lcd.drawJpgFile(SD, "/image_last_train.jpg");
+    renderRemainingTime(true);
 }
 
 void renderAfterLastTrain(){
@@ -183,7 +183,11 @@ void renderAfterLastTrain(){
     delay(30 * 60 * 1000);
 }
 
-void renderRemainingTime(){
+void renderRemainingTime(void){
+    renderRemainingTime(false);
+}
+
+void renderRemainingTime(bool isLast){
     struct tm time_now;
     struct tm time_remaining;
 
@@ -197,7 +201,13 @@ void renderRemainingTime(){
 
 
     char str[20];
-    M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
+
+    if(isLast == true){
+        M5.Lcd.drawJpgFile(SD, "/image_last_train.jpg");
+    }else{
+        M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
+    }
+
     M5.Lcd.setTextColor(BLACK);
     
     M5.Lcd.setTextSize(4);
@@ -277,8 +287,7 @@ void loop()
         renderDebugConsole();
     }    
     else if(trainTimer.isLast()){
-        // renderLastTrain();
-        renderRemainingTime();
+        renderLastTrain();
     }
     else if(trainTimer.wasLast()){
         renderAfterLastTrain();
