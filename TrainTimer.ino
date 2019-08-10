@@ -179,6 +179,8 @@ void renderLastTrain(){
 
 void renderAfterLastTrain(){
     M5.Lcd.drawJpgFile(SD, "/image_after_last.jpg");
+    trainTimer.getNewDia();
+    delay(30 * 60 * 1000);
 }
 
 void renderRemainingTime(){
@@ -189,7 +191,7 @@ void renderRemainingTime(){
         M5.Lcd.println("Failed to obtain time");
         return;
     }
-    g_time_remaining = diffTime(timeinfo[0], time_now);
+    g_time_remaining = diffTime(trainTimer.timeinfo[0], time_now);
 
     int remain_seconds = 0;
 
