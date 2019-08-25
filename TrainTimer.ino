@@ -7,6 +7,18 @@
 
 #include "WiFiConfig.h"
 
+#include "AudioFileSourceSD.h"
+#include "AudioFileSourceID3.h"
+#include "AudioGeneratorMP3.h"
+#include "AudioOutputI2S.h"
+
+AudioGeneratorMP3 *mp3;
+AudioFileSourceSD *file;
+AudioOutputI2S *out;
+AudioFileSourceID3 *id3;
+
+bool flag_mp3IsPlayed = false;
+
 struct tm diffTime(struct tm time1 ,struct tm time2);
 
 #define MODE_DEBUG 1
@@ -45,14 +57,13 @@ class TrainTimer{
                 Serial.print("Response Body: ");
                 Serial.println(body);
                 
-                StaticJsonDocument<64> jsonObj;
-                // JsonObject& root = jsonBuffer.parseObject(body);
-                deserializeJson(jsonObj,body);
+                StaticJsonBuffer<200> jsonBuffer;
+                JsonObject& root = jsonBuffer.parseObject(body);
 
-                size_of_train_info = jsonObj["train"].size();
+                size_of_train_info = root["train"].size();
 
-                for(int i = 0; i < jsonObj["train"].size(); i++){
-                    const char* time1 = jsonObj["train"][i];
+                for(int i = 0; i < root["train"].size(); i++){
+                    const char* time1 = root["train"][i];
                     int hours, minutes ;
                     sscanf(time1, "%2d:%2d", &hours, &minutes);
                     timeinfo[i].tm_hour = hours;
@@ -137,7 +148,18 @@ void printLocalTime()
   Serial.println(&timeinfo, "%Y %m %d %a %H:%M:%S");    //日本人にわかりやすい表記へ変更
 }
 
-
+void playMp3(){
+    file = new AudioFileSourceSD("/twilight.mp3");
+    id3 = new AudioFileSourceID3(file);
+    out = new AudioOutputI2S(0, 1); // Output to builtInDAC
+    out->SetOutputModeMono(true);
+    out->SetGain(0.3);
+    mp3 = new AudioGeneratorMP3();
+    mp3->begin(id3, out);
+    while(mp3->isRunning()){
+        if (!mp3->loop()) mp3->stop();
+    }
+}
 
 
 
@@ -175,16 +197,21 @@ void setup()
 }
 
 void renderLastTrain(){
-    M5.Lcd.drawJpgFile(SD, "/image_last_train.jpg");
+    renderRemainingTime(true);
 }
 
 void renderAfterLastTrain(){
     M5.Lcd.drawJpgFile(SD, "/image_after_last.jpg");
     trainTimer.getNewDia();
+    flag_mp3IsPlayed = false;
     delay(30 * 60 * 1000);
 }
 
-void renderRemainingTime(){
+void renderRemainingTime(void){
+    renderRemainingTime(false);
+}
+
+void renderRemainingTime(bool isLast){
     struct tm time_now;
     struct tm time_remaining;
 
@@ -198,7 +225,13 @@ void renderRemainingTime(){
 
 
     char str[20];
-    M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
+
+    if(isLast == true){
+        M5.Lcd.drawJpgFile(SD, "/image_last_train.jpg");
+    }else{
+        M5.Lcd.drawJpgFile(SD, "/image_remaining_time.jpg");
+    }
+
     M5.Lcd.setTextColor(BLACK);
     
     M5.Lcd.setTextSize(4);
@@ -273,16 +306,23 @@ void loop()
         mode++;
         mode %= 2;
     }
+    if(M5.BtnB.isPressed()){
+        playMp3();
+    }
 
     if(mode == MODE_DEBUG){
         renderDebugConsole();
     }    
     else if(trainTimer.isLast()){
-        // renderLastTrain();
-        renderRemainingTime();
+        renderLastTrain();
+        if((g_time_remaining.tm_min <= 8) && (flag_mp3IsPlayed == false)){
+            playMp3();
+            flag_mp3IsPlayed = true;
+        }
     }
     else if(trainTimer.wasLast()){
         renderAfterLastTrain();
+        flag_mp3IsPlayed = false;
     }else{
         renderRemainingTime();
     }
